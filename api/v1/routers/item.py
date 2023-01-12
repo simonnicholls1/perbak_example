@@ -7,10 +7,11 @@ router = APIRouter(
     tags=['Item']
 )
 
-
+#Dependency injection should be done at some kind of root level in reality
+#But we could mock the data service for example or even just the service
 item_service = ItemService(ItemDataService())
 
-@router.get("/item")
+@router.get("/")
 def get_items():
 
     items = item_service.get_all_items()
@@ -19,7 +20,7 @@ def get_items():
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Items not found")
     return items
 
-@router.get("/item/{id}")
+@router.get("/{id}")
 def get_items_by_id(id):
 
     item = item_service.get_items_by_id(id)
