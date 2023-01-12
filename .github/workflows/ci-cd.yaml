@@ -1,0 +1,48 @@
+name: Deploy to Azure
+
+on:
+  push:
+    branches:
+      - staging
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+
+    - name: Cache dependencies
+      uses: actions/cache@v2
+      with:
+        path: ${{ runner.temp }}/pip-cache
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    - name: Install dependencies
+      run: |
+        python -m venv venv
+        source venv/bin/activate
+        pip install -r requirements.txt
+
+    - name: Build and test
+      run: |
+        python -m pytest
+
+    - name: Deploy to Azure
+      if: github.ref == 'refs/heads/staging'
+      run: |
+        az webapp deployment source config-zip --resource-group myResourceGroup --name <your-staging-web-app-name> --src <zip-file-path>
+
+    - name: Deploy to Azure
+      if: github.ref == 'refs/heads/main'
+      run: |
+        az webapp deployment source config-zip --resource-group myResourceGroup --name <your-production-web-app-name> --src <zip-file-path>
