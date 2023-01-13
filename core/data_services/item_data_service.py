@@ -1,4 +1,4 @@
-from models import ItemModel
+from core.data_services.models import ItemModel
 
 
 class ItemDataService:
