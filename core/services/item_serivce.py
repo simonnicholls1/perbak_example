@@ -8,7 +8,7 @@ class ItemService:
     def get_items_by_id(self, id: int):
         items = self.item_data_service.get_items()
         for item in items:
-            if item.id == id:
+            if item.id == int(id):
                 return item
         raise ValueError('Could not find item with ID: {0}'.format(id))
 
