@@ -1,48 +1,59 @@
-name: Deploy to Azure
+name: Build and deploy Python app to Azure Web App - PerbakExample
 
 on:
   push:
     branches:
-      - staging
-      - main
+      - master
+  workflow_dispatch:
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.8
+      - name: Set up Python version
+        uses: actions/setup-python@v1
+        with:
+          python-version: '3.10'
 
-    - name: Cache dependencies
-      uses: actions/cache@v2
-      with:
-        path: ${{ runner.temp }}/pip-cache
-        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-
+      - name: Create and start virtual environment
+        run: |
+          python -m venv venv
+          source venv/bin/activate
 
-    - name: Install dependencies
-      run: |
-        python -m venv venv
-        source venv/bin/activate
-        pip install -r requirements.txt
+      - name: Install dependencies
+        run: pip install -r requirements.txt
 
-    - name: Build and test
-      run: |
-        python -m pytest
+      # Optional: Add step to run tests here (PyTest, Django test suites, etc.)
 
-    - name: Deploy to Azure
-      if: github.ref == 'refs/heads/staging'
-      run: |
-        az webapp deployment source config-zip --resource-group myResourceGroup --name <your-staging-web-app-name> --src <zip-file-path>
+      - name: Upload artifact for deployment jobs
+        uses: actions/upload-artifact@v2
+        with:
+          name: python-app
+          path: |
+            .
+            !venv/
 
-    - name: Deploy to Azure
-      if: github.ref == 'refs/heads/main'
-      run: |
-        az webapp deployment source config-zip --resource-group myResourceGroup --name <your-production-web-app-name> --src <zip-file-path>
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    environment:
+      name: 'Production'
+      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+
+    steps:
+      - name: Download artifact from build job
+        uses: actions/download-artifact@v2
+        with:
+          name: python-app
+          path: .
+
+      - name: 'Deploy to Azure Web App'
+        uses: azure/webapps-deploy@v2
+        id: deploy-to-webapp
+        with:
+          app-name: 'PerbakExample'
+          slot-name: 'Production'
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_12128FA401C74C37810EC4C201A4EF84 }}
