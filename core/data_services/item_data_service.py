@@ -1,4 +1,4 @@
-from core.data_services.models import ItemModel
+from core.data_services.models.ItemModel import Item
 
 
 class ItemDataService:
@@ -7,5 +7,5 @@ class ItemDataService:
         pass
 
     def get_items(self):
-        list_items = [ItemModel(1, 'Test1'), ItemModel(2, 'Test2')]
+        list_items = [Item(1, 'Test1'), Item(2, 'Test2')]
         return list_items
